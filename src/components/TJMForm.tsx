@@ -12,7 +12,11 @@ import {
 } from "./ui/select";
 import { useToast } from "../hooks/use-toast";
 
-export function TJMForm() {
+interface TJMFormProps {
+  onSubmitSuccess: () => void;
+}
+
+export function TJMForm({ onSubmitSuccess }: TJMFormProps) {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     role: "",
@@ -36,6 +40,7 @@ export function TJMForm() {
       title: "Success!",
       description: "Your TJM has been submitted for review.",
     });
+    onSubmitSuccess();
   };
 
   const handleChange = (field: string, value: string) => {
