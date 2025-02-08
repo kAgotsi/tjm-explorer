@@ -26,7 +26,7 @@ const Index = () => {
 
           <TabsContent value="explore" className="space-y-6">
             <SearchFilters onFiltersChange={setActiveFilters} />
-            <TJMStats />
+            <TJMStats filters={activeFilters} />
           </TabsContent>
 
           <TabsContent value="submit">
