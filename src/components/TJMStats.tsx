@@ -1,14 +1,45 @@
 
 import { Card } from "./ui/card";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "./ui/table";
 
 const mockData = [
-  { month: "Jan", tjm: 550 },
-  { month: "Feb", tjm: 580 },
-  { month: "Mar", tjm: 600 },
-  { month: "Apr", tjm: 590 },
-  { month: "May", tjm: 620 },
-  { month: "Jun", tjm: 650 },
+  {
+    id: 1,
+    role: "Backend Developer",
+    experience: "3-5 years",
+    industry: "Banking",
+    location: "Paris",
+    companySize: "Enterprise",
+    tjm: 650,
+    date: "2024-03-01",
+  },
+  {
+    id: 2,
+    role: "Frontend Developer",
+    experience: "0-2 years",
+    industry: "Startup",
+    location: "Remote",
+    companySize: "Startup",
+    tjm: 450,
+    date: "2024-03-02",
+  },
+  {
+    id: 3,
+    role: "Fullstack Developer",
+    experience: "6-10 years",
+    industry: "Healthcare",
+    location: "Lyon",
+    companySize: "SME",
+    tjm: 700,
+    date: "2024-03-03",
+  },
 ];
 
 export function TJMStats() {
@@ -21,21 +52,37 @@ export function TJMStats() {
           <StatCard title="Max TJM" value="€750" trend="+8%" />
         </div>
         
-        <div className="h-[300px] mt-6">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={mockData}>
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip />
-              <Line
-                type="monotone"
-                dataKey="tjm"
-                stroke="#10B981"
-                strokeWidth={2}
-                dot={{ fill: "#10B981" }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+        <div className="mt-6">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Role</TableHead>
+                <TableHead>Experience</TableHead>
+                <TableHead>Industry</TableHead>
+                <TableHead>Location</TableHead>
+                <TableHead>Company Size</TableHead>
+                <TableHead className="text-right">TJM (€)</TableHead>
+                <TableHead>Date</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {mockData.map((entry) => (
+                <TableRow key={entry.id}>
+                  <TableCell>{entry.role}</TableCell>
+                  <TableCell>{entry.experience}</TableCell>
+                  <TableCell>{entry.industry}</TableCell>
+                  <TableCell>{entry.location}</TableCell>
+                  <TableCell>{entry.companySize}</TableCell>
+                  <TableCell className="text-right font-medium">
+                    €{entry.tjm}
+                  </TableCell>
+                  <TableCell>
+                    {new Date(entry.date).toLocaleDateString()}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       </div>
     </Card>
