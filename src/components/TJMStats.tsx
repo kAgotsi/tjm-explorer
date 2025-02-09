@@ -18,6 +18,8 @@ import {
 } from "./ui/pagination";
 import { Button } from "./ui/button";
 import { Linkedin } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "./ui/dialog";
 
 const mockData = [
   {
@@ -110,9 +112,12 @@ interface TJMStatsProps {
 }
 
 export function TJMStats({ filters = {}, refreshTrigger = 0 }: TJMStatsProps) {
+  const navigate = useNavigate();
   const [filteredData, setFilteredData] = useState(mockData);
   const [currentPage, setCurrentPage] = useState(1);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showProfileCheck, setShowProfileCheck] = useState(false);
+  const [isFreelance, setIsFreelance] = useState<boolean | null>(null);
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -143,9 +148,24 @@ export function TJMStats({ filters = {}, refreshTrigger = 0 }: TJMStatsProps) {
     setCurrentPage(1); // Reset to first page when filters change
   }, [filters, refreshTrigger]);
 
-  const handleLinkedInAuth = () => {
-    // In a real app, this would integrate with LinkedIn OAuth
-    window.open('https://www.linkedin.com/login', '_blank');
+  const handleLinkedInAuth = async () => {
+    setIsAuthenticated(true);
+    setShowProfileCheck(true);
+    
+    const mockProfileCheck = async () => {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      const isFrelanceStatus = Math.random() > 0.5;
+      setIsFreelance(isFrelanceStatus);
+      
+      if (isFrelanceStatus) {
+        navigate("/submit", { state: { requireTJM: true } });
+      } else {
+        setCurrentPage(2);
+        setShowProfileCheck(false);
+      }
+    };
+
+    mockProfileCheck();
   };
 
   // Calculate statistics from filtered data
@@ -165,108 +185,127 @@ export function TJMStats({ filters = {}, refreshTrigger = 0 }: TJMStatsProps) {
   const showAuthPrompt = currentPage > 1 && !isAuthenticated;
 
   return (
-    <Card className="p-6 shadow-lg backdrop-blur-sm bg-white/80">
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <StatCard 
-            title="TJM Moyen" 
-            value={`€${avgTJM}`} 
-            trend="+5%" 
-            description="Moyenne sur la période"
-          />
-          <StatCard 
-            title="TJM Médian" 
-            value={`€${medianTJM}`} 
-            trend="+3%" 
-            description="Valeur médiane"
-          />
-          <StatCard 
-            title="TJM Maximum" 
-            value={`€${maxTJM}`} 
-            trend="+8%" 
-            description="Plus haut TJM"
-          />
-        </div>
-        
-        <div className="mt-6">
-          <div className="rounded-lg overflow-hidden border border-gray-200">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableHead className="font-semibold">Role</TableHead>
-                  <TableHead className="font-semibold">Experience</TableHead>
-                  <TableHead className="font-semibold">Industry</TableHead>
-                  <TableHead className="font-semibold">Location</TableHead>
-                  <TableHead className="font-semibold">Company Size</TableHead>
-                  <TableHead className="text-right font-semibold">TJM (€)</TableHead>
-                  <TableHead className="font-semibold">Date</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedData.map((entry) => (
-                  <TableRow key={entry.id} className="hover:bg-gray-50/50">
-                    <TableCell className="font-medium">{entry.role}</TableCell>
-                    <TableCell>{entry.experience}</TableCell>
-                    <TableCell>{entry.industry}</TableCell>
-                    <TableCell>{entry.location}</TableCell>
-                    <TableCell>{entry.companySize}</TableCell>
-                    <TableCell className="text-right font-semibold text-primary">
-                      €{entry.tjm}
-                    </TableCell>
-                    <TableCell>
-                      {new Date(entry.date).toLocaleDateString()}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+    <>
+      <Dialog open={showProfileCheck} onOpenChange={setShowProfileCheck}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Vérification du profil en cours...</DialogTitle>
+            <DialogDescription>
+              {isFreelance === null ? (
+                "Nous analysons votre profil LinkedIn..."
+              ) : isFreelance ? (
+                "Vous êtes freelance ! Pour accéder à plus de données, merci de partager votre TJM."
+              ) : (
+                "Profil vérifié ! Vous allez être redirigé..."
+              )}
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
 
-          {showAuthPrompt ? (
-            <div className="mt-8 text-center space-y-4">
-              <p className="text-gray-600">Pour voir plus de résultats, connectez-vous avec LinkedIn</p>
-              <Button 
-                onClick={handleLinkedInAuth}
-                className="bg-[#0077B5] hover:bg-[#006097] text-white flex items-center gap-2"
-              >
-                <Linkedin className="w-5 h-5" />
-                Se connecter avec LinkedIn
-              </Button>
-            </div>
-          ) : totalPages > 1 && (
-            <div className="mt-4 flex justify-center">
-              <Pagination>
-                <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious 
-                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                      className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                    />
-                  </PaginationItem>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                    <PaginationItem key={page}>
-                      <PaginationLink
-                        onClick={() => setCurrentPage(page)}
-                        isActive={currentPage === page}
-                        className="cursor-pointer"
-                      >
-                        {page}
-                      </PaginationLink>
-                    </PaginationItem>
+      <Card className="p-6 shadow-lg backdrop-blur-sm bg-white/80">
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <StatCard 
+              title="TJM Moyen" 
+              value={`€${avgTJM}`} 
+              trend="+5%" 
+              description="Moyenne sur la période"
+            />
+            <StatCard 
+              title="TJM Médian" 
+              value={`€${medianTJM}`} 
+              trend="+3%" 
+              description="Valeur médiane"
+            />
+            <StatCard 
+              title="TJM Maximum" 
+              value={`€${maxTJM}`} 
+              trend="+8%" 
+              description="Plus haut TJM"
+            />
+          </div>
+          
+          <div className="mt-6">
+            <div className="rounded-lg overflow-hidden border border-gray-200">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="font-semibold">Role</TableHead>
+                    <TableHead className="font-semibold">Experience</TableHead>
+                    <TableHead className="font-semibold">Industry</TableHead>
+                    <TableHead className="font-semibold">Location</TableHead>
+                    <TableHead className="font-semibold">Company Size</TableHead>
+                    <TableHead className="text-right font-semibold">TJM (€)</TableHead>
+                    <TableHead className="font-semibold">Date</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedData.map((entry) => (
+                    <TableRow key={entry.id} className="hover:bg-gray-50/50">
+                      <TableCell className="font-medium">{entry.role}</TableCell>
+                      <TableCell>{entry.experience}</TableCell>
+                      <TableCell>{entry.industry}</TableCell>
+                      <TableCell>{entry.location}</TableCell>
+                      <TableCell>{entry.companySize}</TableCell>
+                      <TableCell className="text-right font-semibold text-primary">
+                        €{entry.tjm}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(entry.date).toLocaleDateString()}
+                      </TableCell>
+                    </TableRow>
                   ))}
-                  <PaginationItem>
-                    <PaginationNext
-                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                    />
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
+                </TableBody>
+              </Table>
             </div>
-          )}
+
+            {showAuthPrompt ? (
+              <div className="mt-8 text-center space-y-4">
+                <p className="text-gray-600">Pour voir plus de résultats, connectez-vous avec LinkedIn</p>
+                <Button 
+                  onClick={handleLinkedInAuth}
+                  className="bg-[#0077B5] hover:bg-[#006097] text-white flex items-center gap-2"
+                >
+                  <Linkedin className="w-5 h-5" />
+                  Se connecter avec LinkedIn
+                </Button>
+              </div>
+            ) : totalPages > 1 && (
+              <div className="mt-4 flex justify-center">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <PaginationItem key={page}>
+                        <PaginationLink
+                          onClick={() => setCurrentPage(page)}
+                          isActive={currentPage === page}
+                          className="cursor-pointer"
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    </Card>
+      </Card>
+    </>
   );
 }
 
