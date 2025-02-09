@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "./ui/select";
 import { useToast } from "../hooks/use-toast";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Linkedin } from "lucide-react";
 
 interface TJMFormProps {
   onSubmitSuccess: () => void;
@@ -19,6 +19,7 @@ interface TJMFormProps {
 
 export function TJMForm({ onSubmitSuccess }: TJMFormProps) {
   const { toast } = useToast();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [formData, setFormData] = useState({
     role: "",
     experience: "",
@@ -33,8 +34,34 @@ export function TJMForm({ onSubmitSuccess }: TJMFormProps) {
     paymentTerms: "",
   });
 
+  const handleLinkedInAuth = async () => {
+    try {
+      // Ici on simule l'authentification LinkedIn
+      // En production, il faudrait implémenter l'OAuth LinkedIn complet
+      setIsAuthenticated(true);
+      toast({
+        title: "Connecté avec succès!",
+        description: "Vous pouvez maintenant ajouter votre TJM.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erreur de connexion",
+        description: "Impossible de se connecter à LinkedIn.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication requise",
+        description: "Veuillez vous connecter avec LinkedIn d'abord.",
+        variant: "destructive",
+      });
+      return;
+    }
     console.log("Form submitted:", formData);
     toast({
       title: "Success!",
@@ -46,6 +73,36 @@ export function TJMForm({ onSubmitSuccess }: TJMFormProps) {
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="grid md:grid-cols-2 gap-8 items-center">
+        <div className="relative hidden md:block">
+          <div className="absolute inset-0 bg-gradient-to-r from-[#F97316] to-[#FEC6A1] opacity-10 rounded-2xl"></div>
+          <img
+            src="photo-1581091226825-a6a2a5aee158"
+            alt="Developer working"
+            className="w-full h-[600px] object-cover rounded-2xl"
+          />
+          <div className="absolute bottom-6 left-6 right-6 p-6 bg-white/90 backdrop-blur-sm rounded-xl">
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">
+              Authentification requise
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Connectez-vous avec LinkedIn pour partager votre TJM et accéder à toutes les fonctionnalités
+            </p>
+            <Button 
+              onClick={handleLinkedInAuth}
+              className="w-full bg-[#0077B5] hover:bg-[#006097] transition-colors"
+            >
+              <Linkedin className="mr-2 h-4 w-4" />
+              Se connecter avec LinkedIn
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="grid md:grid-cols-2 gap-8 items-center">
