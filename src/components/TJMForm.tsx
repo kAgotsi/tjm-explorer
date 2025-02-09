@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card } from "./ui/card";
 import { Input } from "./ui/input";
@@ -93,123 +92,121 @@ export function TJMForm({ onSubmitSuccess }: TJMFormProps) {
         </div>
       </div>
 
-      <Card className="p-6 shadow-lg border-0 bg-white/70 backdrop-blur-sm">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Role</label>
-              <Select onValueChange={(value) => handleChange("role", value)}>
-                <SelectTrigger className="bg-white">
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="backend">Backend Developer</SelectItem>
-                  <SelectItem value="frontend">Frontend Developer</SelectItem>
-                  <SelectItem value="fullstack">Fullstack Developer</SelectItem>
-                  <SelectItem value="ux">UX Designer</SelectItem>
-                  <SelectItem value="pm">Project Manager</SelectItem>
-                </SelectContent>
-              </Select>
+      <div className="relative">
+        <Card className="p-6 shadow-lg border-0 bg-white/70 backdrop-blur-sm">
+          {!isAuthenticated && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/60 backdrop-blur-sm rounded-xl">
+              <div className="text-center p-8 max-w-md">
+                <h3 className="text-xl font-semibold text-gray-800 mb-4">
+                  Authentification requise
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  Connectez-vous avec LinkedIn pour partager votre TJM
+                </p>
+                <Button 
+                  onClick={handleLinkedInAuth}
+                  className="bg-[#0077B5] hover:bg-[#006097] transition-colors"
+                >
+                  <Linkedin className="mr-2 h-4 w-4" />
+                  Se connecter avec LinkedIn
+                </Button>
+              </div>
+            </div>
+          )}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 gap-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Role</label>
+                <Select onValueChange={(value) => handleChange("role", value)}>
+                  <SelectTrigger className="bg-white">
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="backend">Backend Developer</SelectItem>
+                    <SelectItem value="frontend">Frontend Developer</SelectItem>
+                    <SelectItem value="fullstack">Fullstack Developer</SelectItem>
+                    <SelectItem value="ux">UX Designer</SelectItem>
+                    <SelectItem value="pm">Project Manager</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Experience (years)</label>
+                <Select onValueChange={(value) => handleChange("experience", value)}>
+                  <SelectTrigger className="bg-white">
+                    <SelectValue placeholder="Years of experience" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0-2">0-2 years</SelectItem>
+                    <SelectItem value="3-5">3-5 years</SelectItem>
+                    <SelectItem value="6-10">6-10 years</SelectItem>
+                    <SelectItem value="10+">10+ years</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Mission Duration</label>
+                <Select onValueChange={(value) => handleChange("duration", value)}>
+                  <SelectTrigger className="bg-white">
+                    <SelectValue placeholder="Select duration" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="<3">Less than 3 months</SelectItem>
+                    <SelectItem value="3-6">3-6 months</SelectItem>
+                    <SelectItem value="6-12">6-12 months</SelectItem>
+                    <SelectItem value=">12">More than 12 months</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Location</label>
+                <Input
+                  placeholder="City or Remote"
+                  className="bg-white"
+                  onChange={(e) => handleChange("location", e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">TJM (€)</label>
+                <Input
+                  type="number"
+                  placeholder="Daily rate"
+                  className="bg-white"
+                  onChange={(e) => handleChange("tjm", e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Contract Type</label>
+                <Select onValueChange={(value) => handleChange("contractType", value)}>
+                  <SelectTrigger className="bg-white">
+                    <SelectValue placeholder="Select contract type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="direct">Direct Freelance</SelectItem>
+                    <SelectItem value="portage">Portage Salarial</SelectItem>
+                    <SelectItem value="consulting">Consulting Firm</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Experience (years)</label>
-              <Select onValueChange={(value) => handleChange("experience", value)}>
-                <SelectTrigger className="bg-white">
-                  <SelectValue placeholder="Years of experience" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0-2">0-2 years</SelectItem>
-                  <SelectItem value="3-5">3-5 years</SelectItem>
-                  <SelectItem value="6-10">6-10 years</SelectItem>
-                  <SelectItem value="10+">10+ years</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Mission Duration</label>
-              <Select onValueChange={(value) => handleChange("duration", value)}>
-                <SelectTrigger className="bg-white">
-                  <SelectValue placeholder="Select duration" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="<3">Less than 3 months</SelectItem>
-                  <SelectItem value="3-6">3-6 months</SelectItem>
-                  <SelectItem value="6-12">6-12 months</SelectItem>
-                  <SelectItem value=">12">More than 12 months</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Location</label>
-              <Input
-                placeholder="City or Remote"
-                className="bg-white"
-                onChange={(e) => handleChange("location", e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">TJM (€)</label>
-              <Input
-                type="number"
-                placeholder="Daily rate"
-                className="bg-white"
-                onChange={(e) => handleChange("tjm", e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Contract Type</label>
-              <Select onValueChange={(value) => handleChange("contractType", value)}>
-                <SelectTrigger className="bg-white">
-                  <SelectValue placeholder="Select contract type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="direct">Direct Freelance</SelectItem>
-                  <SelectItem value="portage">Portage Salarial</SelectItem>
-                  <SelectItem value="consulting">Consulting Firm</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <Button 
-            type="submit" 
-            className="w-full bg-gradient-to-r from-[#F97316] to-[#FEC6A1] hover:opacity-90 transition-opacity"
-          >
-            Submit TJM
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        </form>
-      </Card>
-    </div>
-  );
-
-  return (
-    <div className="relative">
-      {!isAuthenticated && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/60 backdrop-blur-sm rounded-xl">
-          <div className="text-center p-8 max-w-md">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">
-              Authentification requise
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Connectez-vous avec LinkedIn pour partager votre TJM
-            </p>
             <Button 
-              onClick={handleLinkedInAuth}
-              className="bg-[#0077B5] hover:bg-[#006097] transition-colors"
+              type="submit" 
+              className="w-full bg-gradient-to-r from-[#F97316] to-[#FEC6A1] hover:opacity-90 transition-opacity"
             >
-              <Linkedin className="mr-2 h-4 w-4" />
-              Se connecter avec LinkedIn
+              Submit TJM
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
-          </div>
-        </div>
-      )}
-      {renderForm()}
+          </form>
+        </Card>
+      </div>
     </div>
   );
+
+  return renderForm();
 }
