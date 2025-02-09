@@ -74,37 +74,7 @@ export function TJMForm({ onSubmitSuccess }: TJMFormProps) {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  if (!isAuthenticated) {
-    return (
-      <div className="grid md:grid-cols-2 gap-8 items-center">
-        <div className="relative hidden md:block">
-          <div className="absolute inset-0 bg-gradient-to-r from-[#F97316] to-[#FEC6A1] opacity-10 rounded-2xl"></div>
-          <img
-            src="photo-1581091226825-a6a2a5aee158"
-            alt="Developer working"
-            className="w-full h-[600px] object-cover rounded-2xl"
-          />
-          <div className="absolute bottom-6 left-6 right-6 p-6 bg-white/90 backdrop-blur-sm rounded-xl">
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">
-              Authentification requise
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Connectez-vous avec LinkedIn pour partager votre TJM et accéder à toutes les fonctionnalités
-            </p>
-            <Button 
-              onClick={handleLinkedInAuth}
-              className="w-full bg-[#0077B5] hover:bg-[#006097] transition-colors"
-            >
-              <Linkedin className="mr-2 h-4 w-4" />
-              Se connecter avec LinkedIn
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
+  const renderForm = () => (
     <div className="grid md:grid-cols-2 gap-8 items-center">
       <div className="relative hidden md:block">
         <div className="absolute inset-0 bg-gradient-to-r from-[#F97316] to-[#FEC6A1] opacity-10 rounded-2xl"></div>
@@ -215,6 +185,31 @@ export function TJMForm({ onSubmitSuccess }: TJMFormProps) {
           </Button>
         </form>
       </Card>
+    </div>
+  );
+
+  return (
+    <div className="relative">
+      {!isAuthenticated && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/60 backdrop-blur-sm rounded-xl">
+          <div className="text-center p-8 max-w-md">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">
+              Authentification requise
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Connectez-vous avec LinkedIn pour partager votre TJM
+            </p>
+            <Button 
+              onClick={handleLinkedInAuth}
+              className="bg-[#0077B5] hover:bg-[#006097] transition-colors"
+            >
+              <Linkedin className="mr-2 h-4 w-4" />
+              Se connecter avec LinkedIn
+            </Button>
+          </div>
+        </div>
+      )}
+      {renderForm()}
     </div>
   );
 }
