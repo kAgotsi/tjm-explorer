@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card } from "./ui/card";
 import {
@@ -17,6 +16,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "./ui/pagination";
+import { Button } from "./ui/button";
+import { Linkedin } from "lucide-react";
 
 const mockData = [
   {
@@ -111,6 +112,7 @@ interface TJMStatsProps {
 export function TJMStats({ filters = {}, refreshTrigger = 0 }: TJMStatsProps) {
   const [filteredData, setFilteredData] = useState(mockData);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -141,6 +143,11 @@ export function TJMStats({ filters = {}, refreshTrigger = 0 }: TJMStatsProps) {
     setCurrentPage(1); // Reset to first page when filters change
   }, [filters, refreshTrigger]);
 
+  const handleLinkedInAuth = () => {
+    // In a real app, this would integrate with LinkedIn OAuth
+    window.open('https://www.linkedin.com/login', '_blank');
+  };
+
   // Calculate statistics from filtered data
   const avgTJM = Math.round(
     filteredData.reduce((acc, curr) => acc + curr.tjm, 0) / filteredData.length
@@ -154,6 +161,8 @@ export function TJMStats({ filters = {}, refreshTrigger = 0 }: TJMStatsProps) {
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage);
+
+  const showAuthPrompt = currentPage > 1 && !isAuthenticated;
 
   return (
     <Card className="p-6 shadow-lg backdrop-blur-sm bg-white/80">
@@ -213,7 +222,18 @@ export function TJMStats({ filters = {}, refreshTrigger = 0 }: TJMStatsProps) {
             </Table>
           </div>
 
-          {totalPages > 1 && (
+          {showAuthPrompt ? (
+            <div className="mt-8 text-center space-y-4">
+              <p className="text-gray-600">Pour voir plus de résultats, connectez-vous avec LinkedIn</p>
+              <Button 
+                onClick={handleLinkedInAuth}
+                className="bg-[#0077B5] hover:bg-[#006097] text-white flex items-center gap-2"
+              >
+                <Linkedin className="w-5 h-5" />
+                Se connecter avec LinkedIn
+              </Button>
+            </div>
+          ) : totalPages > 1 && (
             <div className="mt-4 flex justify-center">
               <Pagination>
                 <PaginationContent>
