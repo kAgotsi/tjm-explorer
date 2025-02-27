@@ -35,13 +35,43 @@ export function TJMForm({ onSubmitSuccess }: TJMFormProps) {
 
   const handleLinkedInAuth = async () => {
     try {
-      // Ici on simule l'authentification LinkedIn
-      // En production, il faudrait implémenter l'OAuth LinkedIn complet
-      setIsAuthenticated(true);
-      toast({
-        title: "Connecté avec succès!",
-        description: "Vous pouvez maintenant ajouter votre TJM.",
-      });
+      // Step 1: Open LinkedIn OAuth dialog (client-side redirect)
+      const clientId = "YOUR_LINKEDIN_CLIENT_ID";
+      const redirectUri = encodeURIComponent("http://yourapp.com/auth/linkedin/callback");
+      const scope = "r_liteprofile"; // Basic profile access
+      const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}`;
+      
+      // Open in a popup or redirect
+      window.location.href = authUrl;
+  
+      // Step 2: Handle this in a separate callback route/component
+      // For simplicity, assume this is after callback with code in URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get("code");
+  
+      if (code) {
+        // Step 3: Exchange code for access token (server-side recommended)
+        const response = await fetch("https://www.linkedin.com/oauth/v2/accessToken", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+            grant_type: "authorization_code",
+            code,
+            redirect_uri: "https://tjm-explorer.vercel.app/auth/linkedin/callback",
+            client_id: "774ckgbyn2k9kq",
+            client_secret: "YWPL_AP1.MtmJrrtsCjup55Ac.xeQTKw==",
+          }),
+        });
+        const data = await response.json();
+        const accessToken = data.access_token;
+  
+        // Step 4: Verify user (optional: fetch profile)
+        setIsAuthenticated(true);
+        toast({
+          title: "Connecté avec succès!",
+          description: "Vous pouvez maintenant ajouter votre TJM.",
+        });
+      }
     } catch (error) {
       toast({
         title: "Erreur de connexion",
@@ -50,7 +80,6 @@ export function TJMForm({ onSubmitSuccess }: TJMFormProps) {
       });
     }
   };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isAuthenticated) {
