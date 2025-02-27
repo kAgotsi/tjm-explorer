@@ -38,7 +38,7 @@ export function TJMForm({ onSubmitSuccess }: TJMFormProps) {
       // Step 1: Open LinkedIn OAuth dialog (client-side redirect)
       const clientId = "774ckgbyn2k9kq";
       const redirectUri = encodeURIComponent("https://tjm-explorer.vercel.app/callback");
-      const scope = "r_liteprofile r_emailaddress w_member_social"; // Basic profile access
+      const scope = "r_liteprofile"; // Basic profile access
       const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=${encodeURIComponent(scope)}`;
 
       // Open in a popup or redirect
