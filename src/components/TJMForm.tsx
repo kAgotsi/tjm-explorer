@@ -36,7 +36,7 @@ export function TJMForm({ onSubmitSuccess }: TJMFormProps) {
   const handleLinkedInAuth = async () => {
     try {
       // Step 1: Open LinkedIn OAuth dialog (client-side redirect)
-      const clientId = "YOUR_LINKEDIN_CLIENT_ID";
+      const clientId = "774ckgbyn2k9kq";
       const redirectUri = encodeURIComponent("http://yourapp.com/auth/linkedin/callback");
       const scope = "r_liteprofile"; // Basic profile access
       const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}`;
