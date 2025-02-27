@@ -57,7 +57,7 @@ export function TJMForm({ onSubmitSuccess }: TJMFormProps) {
           body: new URLSearchParams({
             grant_type: "authorization_code",
             code,
-            redirect_uri: "https://tjm-explorer.vercel.app/auth/linkedin/callback",
+            redirect_uri: "https://tjm-explorer.vercel.app/callback",
             client_id: "774ckgbyn2k9kq",
             client_secret: "YWPL_AP1.MtmJrrtsCjup55Ac.xeQTKw==",
           }),
