@@ -38,7 +38,7 @@ export function TJMForm({ onSubmitSuccess }: TJMFormProps) {
     try {
       const clientId = "774ckgbyn2k9kq";
       const redirectUri = "https://tjm-explorer.vercel.app/callback"; // Must match LinkedIn app settings
-      const scope = "r_liteprofile"; // Scope for basic profile data (includes positions)
+      const scope = "profile"; // Scope for basic profile data (includes positions)
       const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}`;
 
       window.location.href = authUrl; // Redirect to LinkedIn
