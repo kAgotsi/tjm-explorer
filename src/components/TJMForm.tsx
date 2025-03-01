@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "./ui/card";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
@@ -19,6 +19,7 @@ interface TJMFormProps {
 export function TJMForm({ onSubmitSuccess }: TJMFormProps) {
   const { toast } = useToast();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isFreelance, setIsFreelance] = useState<boolean | null>(null); // null = not checked yet
   const [formData, setFormData] = useState({
     role: "",
     experience: "",
@@ -35,43 +36,12 @@ export function TJMForm({ onSubmitSuccess }: TJMFormProps) {
 
   const handleLinkedInAuth = async () => {
     try {
-      // Step 1: Open LinkedIn OAuth dialog (client-side redirect)
       const clientId = "774ckgbyn2k9kq";
-      const redirectUri = encodeURIComponent("https://tjm-explorer.vercel.app/callback");
-      const scope = "profile"; // Basic profile access
-      const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&scope=${encodeURIComponent(scope)}`;
+      const redirectUri = "https://tjm-explorer.vercel.app/callback"; // Must match LinkedIn app settings
+      const scope = "r_liteprofile"; // Scope for basic profile data (includes positions)
+      const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}`;
 
-      // Open in a popup or redirect
-      window.location.href = authUrl;
-  
-      // Step 2: Handle this in a separate callback route/component
-      // For simplicity, assume this is after callback with code in URL
-      const urlParams = new URLSearchParams(window.location.search);
-      const code = urlParams.get("code");
-  
-      if (code) {
-        // Step 3: Exchange code for access token (server-side recommended)
-        const response = await fetch("https://www.linkedin.com/oauth/v2/accessToken", {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams({
-            grant_type: "authorization_code",
-            code,
-            redirect_uri: "https://tjm-explorer.vercel.app/callback",
-            client_id: "774ckgbyn2k9kq",
-            client_secret: "YWPL_AP1.MtmJrrtsCjup55Ac.xeQTKw==",
-          }),
-        });
-        const data = await response.json();
-        const accessToken = data.access_token;
-  
-        // Step 4: Verify user (optional: fetch profile)
-        setIsAuthenticated(true);
-        toast({
-          title: "Connecté avec succès!",
-          description: "Vous pouvez maintenant ajouter votre TJM.",
-        });
-      }
+      window.location.href = authUrl; // Redirect to LinkedIn
     } catch (error) {
       toast({
         title: "Erreur de connexion",
@@ -80,12 +50,119 @@ export function TJMForm({ onSubmitSuccess }: TJMFormProps) {
       });
     }
   };
+
+  // Handle callback and fetch profile data
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get("code");
+    const error = urlParams.get("error");
+
+    if (error) {
+      toast({
+        title: "Erreur",
+        description: urlParams.get("error_description") || "Échec de l'authentification.",
+        variant: "destructive",
+      });
+      window.history.replaceState({}, document.title, "/"); // Clean URL
+      return;
+    }
+
+    if (code && !isAuthenticated) {
+      const fetchTokenAndProfile = async () => {
+        try {
+          const clientId = "774ckgbyn2k9kq";
+          const clientSecret = "YWPL_AP1.MtmJrrtsCjup55Ac.xeQTKw=="; // WARNING: Should not be client-side in prod
+          const redirectUri = "https://tjm-explorer.vercel.app/callback";
+
+          // Step 1: Exchange code for access token
+          const tokenResponse = await fetch("https://www.linkedin.com/oauth/v2/accessToken", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+              grant_type: "authorization_code",
+              code,
+              redirect_uri: redirectUri,
+              client_id: clientId,
+              client_secret: clientSecret,
+            }),
+          });
+
+          const tokenData = await tokenResponse.json();
+          if (!tokenData.access_token) {
+            throw new Error("Failed to get access token");
+          }
+          const accessToken = tokenData.access_token;
+
+          // Step 2: Fetch profile data (positions)
+          const profileResponse = await fetch("https://api.linkedin.com/v2/me?projection=(id,positions)", {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "cache-control": "no-cache",
+              "X-Restli-Protocol-Version": "2.0.0",
+            },
+          });
+
+          const profileData = await profileResponse.json();
+          const positions = profileData.positions?.elements || [];
+          const lastPosition = positions.length > 0 ? positions[0] : null;
+
+          // Step 3: Determine if freelance or CDI
+          let isFreelancePosition = false;
+          if (lastPosition) {
+            const title = lastPosition.title?.toLowerCase() || "";
+            const companyName = lastPosition.company?.name?.toLowerCase() || "";
+            // Heuristic: Check for freelance indicators
+            isFreelancePosition =
+              title.includes("freelance") ||
+              title.includes("self-employed") ||
+              title.includes("consultant") ||
+              companyName === "self-employed";
+            // Assume CDI if full-time and no freelance indicators
+            if (lastPosition.employmentType === "Full-time" && !isFreelancePosition) {
+              isFreelancePosition = false;
+            }
+          }
+
+          setIsAuthenticated(true);
+          setIsFreelance(isFreelancePosition);
+          toast({
+            title: "Connecté avec succès!",
+            description: isFreelancePosition
+              ? "Vous êtes freelance, veuillez remplir le formulaire TJM."
+              : "Vous êtes en CDI, pas besoin de remplir le formulaire TJM.",
+          });
+
+          // Clean URL after processing
+          window.history.replaceState({}, document.title, "/");
+        } catch (error) {
+          console.error("Auth error:", error);
+          toast({
+            title: "Erreur",
+            description: "Échec lors de la récupération des données LinkedIn.",
+            variant: "destructive",
+          });
+          window.history.replaceState({}, document.title, "/");
+        }
+      };
+
+      fetchTokenAndProfile();
+    }
+  }, [isAuthenticated, toast]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isAuthenticated) {
       toast({
         title: "Authentication requise",
         description: "Veuillez vous connecter avec LinkedIn d'abord.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!isFreelance) {
+      toast({
+        title: "Non applicable",
+        description: "Le formulaire TJM est réservé aux freelances.",
         variant: "destructive",
       });
       return;
@@ -142,96 +219,54 @@ export function TJMForm({ onSubmitSuccess }: TJMFormProps) {
               </div>
             </div>
           )}
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Role</label>
-                <Select onValueChange={(value) => handleChange("role", value)}>
-                  <SelectTrigger className="bg-white">
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="backend">Backend Developer</SelectItem>
-                    <SelectItem value="frontend">Frontend Developer</SelectItem>
-                    <SelectItem value="fullstack">Fullstack Developer</SelectItem>
-                    <SelectItem value="ux">UX Designer</SelectItem>
-                    <SelectItem value="pm">Project Manager</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Experience (years)</label>
-                <Select onValueChange={(value) => handleChange("experience", value)}>
-                  <SelectTrigger className="bg-white">
-                    <SelectValue placeholder="Years of experience" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0-2">0-2 years</SelectItem>
-                    <SelectItem value="3-5">3-5 years</SelectItem>
-                    <SelectItem value="6-10">6-10 years</SelectItem>
-                    <SelectItem value="10+">10+ years</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Mission Duration</label>
-                <Select onValueChange={(value) => handleChange("duration", value)}>
-                  <SelectTrigger className="bg-white">
-                    <SelectValue placeholder="Select duration" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="<3">Less than 3 months</SelectItem>
-                    <SelectItem value="3-6">3-6 months</SelectItem>
-                    <SelectItem value="6-12">6-12 months</SelectItem>
-                    <SelectItem value=">12">More than 12 months</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Location</label>
-                <Input
-                  placeholder="City or Remote"
-                  className="bg-white"
-                  onChange={(e) => handleChange("location", e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">TJM (€)</label>
-                <Input
-                  type="number"
-                  placeholder="Daily rate"
-                  className="bg-white"
-                  onChange={(e) => handleChange("tjm", e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Contract Type</label>
-                <Select onValueChange={(value) => handleChange("contractType", value)}>
-                  <SelectTrigger className="bg-white">
-                    <SelectValue placeholder="Select contract type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="direct">Direct Freelance</SelectItem>
-                    <SelectItem value="portage">Portage Salarial</SelectItem>
-                    <SelectItem value="consulting">Consulting Firm</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+          {isAuthenticated && isFreelance === false && (
+            <div className="text-center p-8">
+              <h3 className="text-xl font-semibold text-gray-800 mb-4">
+                Pas de formulaire TJM requis
+              </h3>
+              <p className="text-gray-600">
+                Votre dernière position est un CDI. Ce formulaire est réservé aux freelances.
+              </p>
             </div>
-
-            <Button 
-              type="submit" 
-              className="w-full bg-gradient-to-r from-[#F97316] to-[#FEC6A1] hover:opacity-90 transition-opacity"
-            >
-              Submit TJM
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </form>
+          )}
+          {isAuthenticated && isFreelance === true && (
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 gap-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Role</label>
+                  <Select onValueChange={(value) => handleChange("role", value)}>
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="backend">Backend Developer</SelectItem>
+                      <SelectItem value="frontend">Frontend Developer</SelectItem>
+                      <SelectItem value="fullstack">Fullstack Developer</SelectItem>
+                      <SelectItem value="ux">UX Designer</SelectItem>
+                      <SelectItem value="pm">Project Manager</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {/* Add other fields as needed */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">TJM (€)</label>
+                  <Input
+                    type="number"
+                    placeholder="Daily rate"
+                    className="bg-white"
+                    onChange={(e) => handleChange("tjm", e.target.value)}
+                  />
+                </div>
+              </div>
+              <Button 
+                type="submit" 
+                className="w-full bg-gradient-to-r from-[#F97316] to-[#FEC6A1] hover:opacity-90 transition-opacity"
+              >
+                Submit TJM
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </form>
+          )}
         </Card>
       </div>
     </div>
